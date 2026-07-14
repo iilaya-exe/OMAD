@@ -1,0 +1,14 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+
+# Local scratch / backups
+*.bak
+*.tmp
+budget-backup-*.json
+expenses-*.csv

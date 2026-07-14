@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A student budget and expense tracker that runs entirely in your browser." />
+  <title>Student Budget &amp; Expense Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5.5' fill='%232a78d6'/%3E%3Cg fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.4 8.1V6.7a.7.7 0 0 0-.7-.7H7.4a1.4 1.4 0 0 0 0 2.8h9.8a.7.7 0 0 1 .7.7v2.1'/%3E%3Cpath d='M6 7.4v9.1a1.4 1.4 0 0 0 1.4 1.4h9.8a.7.7 0 0 0 .7-.7v-2.8'/%3E%3Cpath d='M18.7 11.6h-2.8a1.4 1.4 0 0 0 0 2.8h2.8v-2.8z'/%3E%3C/g%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <h1 class="app-title">
+          <span class="logo-mark" data-icon="wallet" data-icon-size="17"></span>
+          Student Budget
+        </h1>
+        <span id="period-badge" class="period-badge" title="Budgeting period — change it in Settings" hidden></span>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle" class="btn btn-ghost icon-only" type="button" title="Toggle light / dark theme" aria-label="Toggle theme">
+          <span class="icon-sun" data-icon="sun"></span>
+          <span class="icon-moon" data-icon="moon"></span>
+        </button>
+        <button id="add-expense-btn" class="btn btn-primary" type="button">
+          <span data-icon="plus" data-icon-size="15"></span>Add expense
+        </button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Main sections">
+      <button class="tab active" role="tab" aria-selected="true"  data-tab="dashboard">Dashboard</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="expenses">Expenses</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="budgets">Budgets</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="savings">Savings</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
+      <div class="month-nav">
+        <button id="dash-prev-month" class="btn btn-ghost icon-only" type="button" aria-label="Previous month"><span data-icon="chevron-left"></span></button>
+        <h2 id="dash-month-label" class="month-label">Month</h2>
+        <button id="dash-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
+      </div>
+
+      <div id="kpi-row" class="kpi-row">
+        <!-- stat tiles rendered by app.js -->
+      </div>
+
+      <div class="chart-grid">
+        <div class="card">
+          <h3 class="card-title">Spending by category</h3>
+          <p class="card-subtitle" id="cat-chart-subtitle"></p>
+          <div id="category-chart" class="chart-host"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Last 6 months</h3>
+          <p class="card-subtitle">Total spend per month</p>
+          <div id="trend-chart" class="chart-host"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Recent expenses</h3>
+        <div id="recent-expenses"></div>
+      </div>
+    </section>
+
+    <!-- ============ EXPENSES ============ -->
+    <section id="tab-expenses" class="tab-panel" role="tabpanel" hidden>
+      <div class="month-nav">
+        <button id="exp-prev-month" class="btn btn-ghost icon-only" type="button" aria-label="Previous month"><span data-icon="chevron-left"></span></button>
+        <h2 id="exp-month-label" class="month-label">Month</h2>
+        <button id="exp-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
+      </div>
+
+      <div class="filter-row">
+        <input id="search-input" class="input" type="search" placeholder="Search notes…" aria-label="Search expenses" />
+        <select id="category-filter" class="input" aria-label="Filter by category">
+          <option value="">All categories</option>
+        </select>
+        <select id="sort-select" class="input" aria-label="Sort expenses">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="amount-desc">Highest amount</option>
+          <option value="amount-asc">Lowest amount</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="list-summary" id="expense-list-summary"></div>
+        <div id="expense-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ BUDGETS ============ -->
+    <section id="tab-budgets" class="tab-panel" role="tabpanel" hidden>
+      <div class="month-nav">
+        <button id="bud-prev-month" class="btn btn-ghost icon-only" type="button" aria-label="Previous month"><span data-icon="chevron-left"></span></button>
+        <h2 id="bud-month-label" class="month-label">Month</h2>
+        <button id="bud-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Monthly budgets by category</h3>
+        <p class="card-subtitle">Set a monthly limit per category. Meters show this month's spending against each limit.</p>
+        <div id="budget-list"></div>
+        <div class="budget-total" id="budget-total"></div>
+      </div>
+    </section>
+
+    <!-- ============ SAVINGS ============ -->
+    <section id="tab-savings" class="tab-panel" role="tabpanel" hidden>
+      <div class="card">
+        <h3 class="card-title">New savings goal</h3>
+        <p class="card-subtitle">Give it a name, a target amount, and (optionally) a date you want to reach it by.</p>
+        <form id="goal-form" class="goal-form" novalidate>
+          <input id="g-name" class="input" type="text" maxlength="60" placeholder="e.g. Spring break trip" aria-label="Goal name" required />
+          <input id="g-target" class="input" type="number" step="0.01" min="0.01" placeholder="Target amount" aria-label="Target amount" required />
+          <input id="g-deadline" class="input" type="date" aria-label="Target date (optional)" title="Target date (optional)" />
+          <button type="submit" class="btn btn-primary"><span data-icon="plus" data-icon-size="15"></span>Add goal</button>
+        </form>
+        <p id="goal-form-error" class="form-error" hidden></p>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Your goals</h3>
+        <p class="card-subtitle" id="savings-summary"></p>
+        <div id="goals-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
+      <div class="card">
+        <h3 class="card-title">Budgeting period</h3>
+        <p class="card-subtitle">The semester and academic year this budget covers — shown in the header. All amounts are in Philippine pesos (₱).</p>
+        <div class="settings-row">
+          <label for="set-semester">Semester</label>
+          <select id="set-semester" class="input">
+            <option>1st Semester</option>
+            <option>2nd Semester</option>
+            <option>Summer / Midyear</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <label for="set-ay">Academic year</label>
+          <select id="set-ay" class="input"></select>
+        </div>
+        <div class="period-actions">
+          <p class="card-subtitle">Finished this term? Starting a new period moves everything — expenses, budgets, and savings goals — into History below, then takes you back to the setup screen.</p>
+          <button id="new-period-btn" class="btn btn-primary" type="button">
+            <span data-icon="plus" data-icon-size="15"></span>Start a new budgeting period
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">History</h3>
+        <p class="card-subtitle">Your past budgeting periods. Click one to see its full breakdown.</p>
+        <div id="archive-list"></div>
+      </div>
+
+      <p class="about-note">Student Budget &amp; Expense Tracker — open source, no accounts, no tracking.</p>
+    </section>
+  </main>
+
+  <!-- ============ ADD / EDIT MODAL ============ -->
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">Add expense</h3>
+      <form id="expense-form" novalidate>
+        <input type="hidden" id="f-id" />
+        <div class="form-row">
+          <label for="f-amount">Amount</label>
+          <input id="f-amount" class="input" type="number" step="0.01" min="0.01" placeholder="0.00" required />
+        </div>
+        <div class="form-row">
+          <label for="f-category">Category</label>
+          <select id="f-category" class="input" required></select>
+        </div>
+        <div class="form-row">
+          <label for="f-date">Date</label>
+          <input id="f-date" class="input" type="date" required />
+        </div>
+        <div class="form-row">
+          <label for="f-method">Payment method</label>
+          <select id="f-method" class="input">
+            <option value="Cash">Cash</option>
+            <option value="Debit card">Debit card</option>
+            <option value="Credit card">Credit card</option>
+            <option value="Mobile / e-wallet">Mobile / e-wallet</option>
+            <option value="Bank transfer">Bank transfer</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="f-note">Note <span class="optional">(optional)</span></label>
+          <input id="f-note" class="input" type="text" maxlength="120" placeholder="e.g. lunch with study group" />
+        </div>
+        <p id="form-error" class="form-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" id="modal-cancel" class="btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ FIRST-RUN ONBOARDING ============ -->
+  <div id="onboarding" class="onboarding" hidden>
+    <div class="onboarding-card">
+      <span class="logo-mark lg" data-icon="wallet" data-icon-size="26"></span>
+      <h2>Welcome to Student Budget</h2>
+      <p>Before you start, tell us which school term this budget covers. You can change it anytime in Settings.</p>
+      <div class="form-row">
+        <label for="ob-semester">Semester</label>
+        <select id="ob-semester" class="input">
+          <option>1st Semester</option>
+          <option>2nd Semester</option>
+          <option>Summer / Midyear</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="ob-ay">Academic year</label>
+        <select id="ob-ay" class="input"></select>
+      </div>
+      <button id="ob-start" class="btn btn-primary btn-block" type="button">Start budgeting</button>
+    </div>
+  </div>
+
+  <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
