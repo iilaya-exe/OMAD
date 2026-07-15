@@ -35,5 +35,3 @@ Built with plain **HTML, CSS, and JavaScript** — no dependencies, no build ste
 ### Data & Settings
 - Light/dark theme (follows OS setting).
 - Data stays local in your browser.
-
-This version is concise, structured, and reads like a proper README for a small open-source project. Would you like me to also add a **short “Usage” section** with example screenshots or commands, so new users can see what the app looks like right away?
