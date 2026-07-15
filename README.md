@@ -1,7 +1,3 @@
-Here’s a tightened version of your README that reads like a proper project document, clear and straightforward:
-
----
-
 # Student Budget & Expense Tracker
 
 A lightweight budget and expense tracker built for matipid na students. Runs entirely in your browser — no accounts, no server, no installs, no tracking. Data is stored locally in `localStorage` and never leaves your device.
