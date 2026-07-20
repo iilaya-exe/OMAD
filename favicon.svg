@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="coin" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="0.5" stop-color="#f5b942"/>
+      <stop offset="1" stop-color="#c9821a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset="1" stop-color="#a8660f"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="12" cy="12" r="10.5" fill="url(#rim)"/>
+  <circle cx="12" cy="12" r="8.9" fill="url(#coin)"/>
+  <circle cx="12" cy="12" r="8.9" fill="none" stroke="#8a5a0d" stroke-opacity="0.35" stroke-width="0.6"/>
+  <circle cx="12" cy="12" r="7.1" fill="none" stroke="#fff6d9" stroke-opacity="0.55" stroke-width="0.7" stroke-dasharray="1.15 1.5" stroke-linecap="round"/>
+
+  <text x="12" y="16.1" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="11.5" font-weight="700" fill="#7a4c0a" fill-opacity="0.85">&#8369;</text>
+
+  <ellipse cx="9" cy="8" rx="3.4" ry="1.9" fill="#ffffff" opacity="0.35" transform="rotate(-28 9 8)"/>
+</svg>
