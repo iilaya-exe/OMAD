@@ -35,6 +35,7 @@ const Storage = (() => {
         theme: "auto",
         period: null, // { semester, academicYear "YYYY-YYYY" } — set during onboarding
       },
+      overallBudgetCents: 0, // one limit for everything in a month (0 = not set)
       budgets: {},   // { categoryId: centavos }
       expenses: [],  // { id, amountCents, category, date "YYYY-MM-DD", method, note }
       goals: [],     // { id, name, targetCents, deadline "YYYY-MM-DD"|"", entries: [{ id, amountCents, date }] }
@@ -106,6 +107,10 @@ const Storage = (() => {
     return out;
   }
 
+  function cleanCents(v) {
+    return Number.isFinite(v) && v > 0 ? Math.round(v) : 0;
+  }
+
   function cleanGoalList(list) {
     const out = [];
     if (!Array.isArray(list)) return out;
@@ -148,6 +153,7 @@ const Storage = (() => {
       clean.settings.period = cleanPeriod(obj.settings.period);
     }
 
+    clean.overallBudgetCents = cleanCents(obj.overallBudgetCents);
     clean.budgets = cleanBudgetMap(obj.budgets);
     clean.expenses = cleanExpenseList(obj.expenses);
     clean.goals = cleanGoalList(obj.goals);
@@ -164,6 +170,7 @@ const Storage = (() => {
             ? a.archivedAt
             : new Date().toISOString().slice(0, 10),
           expenses: cleanExpenseList(a.expenses),
+          overallBudgetCents: cleanCents(a.overallBudgetCents),
           budgets: cleanBudgetMap(a.budgets),
           goals: cleanGoalList(a.goals),
         });
@@ -227,9 +234,12 @@ const Storage = (() => {
       academicYear: `${startYear}-${startYear + 1}`,
     };
 
+    // a couple of these run tight on purpose, so the demo shows what an
+    // over-budget category looks like on the dashboard
+    data.overallBudgetCents = 1600000;
     data.budgets = {
-      food: 350000, groceries: 400000, transport: 100000, housing: 500000,
-      education: 250000, entertainment: 150000, health: 100000, other: 100000,
+      food: 280000, groceries: 320000, transport: 50000, housing: 450000,
+      education: 150000, entertainment: 120000, health: 100000, other: 100000,
     };
 
     genExpenses(0, 2, data.expenses);
@@ -272,6 +282,7 @@ const Storage = (() => {
       period: prev,
       archivedAt: iso(new Date(now.getFullYear(), now.getMonth() - 3, 20)),
       expenses: archExpenses,
+      overallBudgetCents: 1600000,
       budgets: {
         food: 300000, groceries: 350000, transport: 100000, housing: 480000,
         education: 300000, entertainment: 120000, health: 100000, other: 80000,

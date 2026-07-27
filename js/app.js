@@ -73,6 +73,42 @@
     return list.reduce((acc, e) => acc + e.amountCents, 0);
   }
 
+  /* ---------- budget helpers ----------
+     Two ways to budget, and they coexist: one overall limit for the
+     month, and/or a limit per category. The overall limit wins as the
+     headline number when it's set; otherwise the category limits are
+     added up so the dashboard still has something to measure against. */
+
+  function overallBudget() {
+    return data.overallBudgetCents || 0;
+  }
+
+  function categoryBudgetTotal() {
+    return Object.values(data.budgets).reduce((a, b) => a + b, 0);
+  }
+
+  /* { cents, source } — source is "overall" | "categories" | "none" */
+  function headlineBudget() {
+    const overall = overallBudget();
+    if (overall > 0) return { cents: overall, source: "overall" };
+    const cats = categoryBudgetTotal();
+    if (cats > 0) return { cents: cats, source: "categories" };
+    return { cents: 0, source: "none" };
+  }
+
+  function totalsByCategory(list) {
+    const byCat = {};
+    for (const e of list) byCat[e.category] = (byCat[e.category] || 0) + e.amountCents;
+    return byCat;
+  }
+
+  function overspentCategories(byCat) {
+    return Storage.CATEGORIES.filter((c) => {
+      const budget = data.budgets[c.id] || 0;
+      return budget > 0 && (byCat[c.id] || 0) > budget;
+    });
+  }
+
   /* ---------- persistence wrapper ---------- */
 
   function commit() {
@@ -194,7 +230,8 @@
 
     const monthExpenses = expensesInMonth(ui.month);
     const total = sumCents(monthExpenses);
-    const budgetTotal = Object.values(data.budgets).reduce((a, b) => a + b, 0);
+    const headline = headlineBudget();
+    const budgetTotal = headline.cents;
     const remaining = budgetTotal - total;
 
     // avg/day: divide by days elapsed if current month, else days in month
@@ -205,19 +242,22 @@
     const avgPerDay = daysElapsed > 0 ? Math.round(total / daysElapsed) : 0;
 
     // top category
-    const byCat = {};
-    for (const e of monthExpenses) byCat[e.category] = (byCat[e.category] || 0) + e.amountCents;
+    const byCat = totalsByCategory(monthExpenses);
     const topCat = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
+
+    renderBudgetAlert(total, byCat);
 
     const tiles = [
       { icon: "receipt", tint: "blue", label: "Spent this month", value: fmtMoney(total), hint: `${monthExpenses.length} expense${monthExpenses.length === 1 ? "" : "s"}` },
       budgetTotal > 0
         ? {
             icon: "wallet", tint: "green", label: "Budget remaining", value: fmtMoney(remaining),
-            hint: remaining >= 0 ? `of ${fmtMoney(budgetTotal)} budgeted` : "over budget",
+            hint: remaining >= 0
+              ? `of ${fmtMoney(budgetTotal)} ${headline.source === "overall" ? "overall" : "across categories"}`
+              : `over your ${headline.source === "overall" ? "overall" : "total"} budget`,
             hintClass: remaining >= 0 ? "good" : "bad",
           }
-        : { icon: "wallet", tint: "green", label: "Budget remaining", value: "—", hint: "set budgets in the Budgets tab" },
+        : { icon: "wallet", tint: "green", label: "Budget remaining", value: "—", hint: "set a budget in the Budgets tab" },
       topCat
         ? { icon: "tag", tint: "violet", label: "Top category", value: catById(topCat[0]).name, hint: fmtMoney(topCat[1]) }
         : { icon: "tag", tint: "violet", label: "Top category", value: "—", hint: "no expenses yet" },
@@ -246,10 +286,32 @@
       row.appendChild(tile);
     }
 
-    // category bar chart (sorted high → low; each category keeps its fixed color)
-    $("#cat-chart-subtitle").textContent = monthLabel(ui.month);
+    // category bar chart (sorted high → low; each category keeps its fixed
+    // color, and its budget rides along so the chart can flag overspending)
+    const overCats = overspentCategories(byCat);
+    $("#cat-chart-subtitle").textContent = overCats.length
+      ? `${monthLabel(ui.month)} · ${overCats.length} over budget`
+      : monthLabel(ui.month);
     const items = Storage.CATEGORIES
-      .map((c) => ({ label: c.name, value: byCat[c.id] || 0, color: catColor(c.id), valueText: fmtMoney(byCat[c.id] || 0) }))
+      .map((c) => {
+        const value = byCat[c.id] || 0;
+        const budget = data.budgets[c.id] || 0;
+        let tooltip = fmtMoney(value);
+        if (budget > 0) {
+          tooltip = value > budget
+            ? `${fmtMoney(value)} of ${fmtMoney(budget)} budget — over by ${fmtMoney(value - budget)}`
+            : `${fmtMoney(value)} of ${fmtMoney(budget)} budget — ${fmtMoney(budget - value)} left`;
+        }
+        return {
+          label: c.name,
+          value,
+          budget,
+          color: catColor(c.id),
+          valueText: fmtMoney(value),
+          overText: fmtMoney(Math.max(0, value - budget)),
+          tooltip,
+        };
+      })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
     Charts.categoryBars($("#category-chart"), items);
@@ -269,6 +331,78 @@
       .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
       .slice(0, 5);
     renderExpenseRows($("#recent-expenses"), recent, false);
+  }
+
+  /* ---------- over-budget banner ----------
+     Sits above the stat tiles, so an overspend is the first thing on
+     the dashboard rather than something you have to read off a chart.
+     Icon + wording carry the message; color only reinforces it. */
+
+  function renderBudgetAlert(total, byCat) {
+    const box = $("#budget-alert");
+    box.innerHTML = "";
+    box.classList.remove("critical", "warning");
+
+    const overall = overallBudget();
+    const overCats = overspentCategories(byCat);
+    const month = monthLabel(ui.month);
+    const catNames = overCats.map((c) => c.name).join(", ");
+    const catLine = overCats.length === 1
+      ? `${catNames} is over its own limit too.`
+      : (overCats.length ? `${overCats.length} categories are over their limits: ${catNames}.` : "");
+
+    let level = "", title = "", detail = "";
+
+    if (overall > 0 && total > overall) {
+      level = "critical";
+      title = `Over your overall budget by ${fmtMoney(total - overall)}`;
+      detail = `${fmtMoney(total)} spent of ${fmtMoney(overall)} for ${month}. ${catLine}`;
+    } else if (overCats.length) {
+      level = "critical";
+      const parts = [];
+      if (overCats.length === 1) {
+        const c = overCats[0];
+        const spent = byCat[c.id] || 0;
+        title = `${c.name} is over budget`;
+        parts.push(`${fmtMoney(spent)} spent against a ${fmtMoney(data.budgets[c.id])} limit — ${fmtMoney(spent - data.budgets[c.id])} over.`);
+      } else {
+        title = `${overCats.length} categories are over budget`;
+        parts.push(`${catNames}.`);
+      }
+      parts.push(overall > 0
+        ? `Your ${fmtMoney(overall)} overall budget still has ${fmtMoney(overall - total)} left.`
+        : "Overspending here eats into everything else.");
+      detail = parts.join(" ");
+    } else if (overall > 0 && total >= overall * 0.85) {
+      level = "warning";
+      title = `${Math.round((total / overall) * 100)}% of your overall budget used`;
+      detail = `${fmtMoney(overall - total)} left of ${fmtMoney(overall)} for ${month}.`;
+    }
+
+    if (!level) {
+      box.hidden = true;
+      return;
+    }
+
+    box.classList.add(level);
+    const icon = document.createElement("span");
+    icon.className = "alert-icon";
+    icon.innerHTML = Icons.svg("alert", 17);
+    const text = document.createElement("div");
+    const strong = document.createElement("div");
+    strong.className = "alert-title";
+    strong.textContent = title;
+    const sub = document.createElement("div");
+    sub.className = "alert-detail";
+    sub.textContent = detail.trim();
+    text.append(strong, sub);
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "btn";
+    action.textContent = "Review budgets";
+    action.addEventListener("click", () => switchTab("budgets"));
+    box.append(icon, text, action);
+    box.hidden = false;
   }
 
   /* ---------- expense list ---------- */
@@ -372,8 +506,9 @@
     $("#bud-month-label").textContent = monthLabel(ui.month);
 
     const monthExpenses = expensesInMonth(ui.month);
-    const byCat = {};
-    for (const e of monthExpenses) byCat[e.category] = (byCat[e.category] || 0) + e.amountCents;
+    const byCat = totalsByCategory(monthExpenses);
+
+    renderOverallBudget(sumCents(monthExpenses));
 
     const container = $("#budget-list");
     container.innerHTML = "";
@@ -446,11 +581,72 @@
       container.appendChild(row);
     }
 
-    const totalBudget = Object.values(data.budgets).reduce((a, b) => a + b, 0);
+    const totalBudget = categoryBudgetTotal();
     const totalSpent = sumCents(monthExpenses);
     $("#budget-total").textContent = totalBudget > 0
-      ? `Total: ${fmtMoney(totalSpent)} spent of ${fmtMoney(totalBudget)} budgeted per month`
+      ? `Total: ${fmtMoney(totalSpent)} spent of ${fmtMoney(totalBudget)} budgeted across categories`
       : "Tip: set a monthly amount for each category to see progress meters.";
+  }
+
+  /* ---------- overall (general) budget ---------- */
+
+  function renderOverallBudget(spent) {
+    const overall = overallBudget();
+    const input = $("#overall-budget-input");
+
+    $("#overall-currency").textContent = data.settings.currency;
+    // don't fight the user while they're typing in the field
+    if (document.activeElement !== input) {
+      input.value = overall > 0 ? (overall / 100).toFixed(overall % 100 === 0 ? 0 : 2) : "";
+    }
+
+    const fill = $("#overall-meter-fill");
+    const caption = $("#overall-caption");
+    const over = overall > 0 && spent > overall;
+    const pct = overall > 0 ? Math.min(100, (spent / overall) * 100) : (spent > 0 ? 100 : 0);
+    fill.style.width = pct + "%";
+    fill.style.background = over
+      ? "var(--status-critical)"
+      : (overall > 0 && pct >= 85 ? "var(--status-warning)" : "var(--accent)");
+
+    if (overall > 0) {
+      caption.innerHTML = over
+        ? `<span class="over">${Icons.svg("alert", 13)} ${fmtMoney(spent)} of ${fmtMoney(overall)} — over by ${fmtMoney(spent - overall)}</span>`
+        : `${fmtMoney(spent)} of ${fmtMoney(overall)} (${Math.round(pct)}%) · ${fmtMoney(overall - spent)} left this month`;
+    } else {
+      caption.textContent = spent > 0
+        ? `${fmtMoney(spent)} spent in ${monthLabel(ui.month)} — no overall budget set`
+        : "No overall budget set";
+    }
+
+    // how the per-category limits below add up against the overall one
+    const cats = categoryBudgetTotal();
+    const note = $("#allocation-note");
+    note.classList.toggle("warn", overall > 0 && cats > overall);
+    if (overall > 0 && cats > overall) {
+      note.textContent = `Heads up: your category budgets add up to ${fmtMoney(cats)} — ${fmtMoney(cats - overall)} more than this overall limit.`;
+    } else if (overall > 0 && cats > 0) {
+      note.textContent = `Categories allocate ${fmtMoney(cats)} of it — ${fmtMoney(overall - cats)} still unallocated.`;
+    } else if (overall > 0) {
+      note.textContent = "Nothing split into categories yet — that's fine, this one limit covers everything.";
+    } else if (cats > 0) {
+      note.textContent = `No overall limit, so the dashboard falls back to your category budgets (${fmtMoney(cats)} a month).`;
+    } else {
+      note.textContent = "";
+    }
+  }
+
+  function saveOverallBudget() {
+    const input = $("#overall-budget-input");
+    const v = parseFloat(input.value);
+    const next = !Number.isFinite(v) || v <= 0 ? 0 : Math.round(v * 100);
+    if (next === overallBudget()) return;
+    data.overallBudgetCents = next;
+    commit();
+    renderAll();
+    // renderOverallBudget leaves a focused field alone, so tidy it here
+    input.value = next > 0 ? (next / 100).toFixed(next % 100 === 0 ? 0 : 2) : "";
+    toast(next > 0 ? `Overall budget set to ${fmtMoney(next)}/month` : "Overall budget cleared");
   }
 
   /* ---------- savings goals ---------- */
@@ -651,12 +847,14 @@
         period: data.settings.period,
         archivedAt: todayISO(),
         expenses: data.expenses,
+        overallBudgetCents: data.overallBudgetCents,
         budgets: data.budgets,
         goals: data.goals,
       });
     }
 
     data.expenses = [];
+    data.overallBudgetCents = 0;
     data.budgets = {};
     data.goals = [];
     data.settings.period = null; // brings the onboarding screen back
@@ -701,6 +899,9 @@
       const archivedDate = new Date(a.archivedAt + "T00:00:00")
         .toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
       meta.textContent = `${a.expenses.length} expense${a.expenses.length === 1 ? "" : "s"} · ${fmtMoney(total)} spent · closed ${archivedDate}`;
+      if (a.overallBudgetCents > 0) {
+        meta.textContent += ` · ${fmtMoney(a.overallBudgetCents)}/mo overall budget`;
+      }
       headText.append(title, meta);
       const chevron = document.createElement("span");
       chevron.className = "archive-chevron";
@@ -949,6 +1150,9 @@
     $("#search-input").addEventListener("input", (e) => { ui.search = e.target.value.trim(); renderExpenses(); });
     $("#category-filter").addEventListener("change", (e) => { ui.categoryFilter = e.target.value; renderExpenses(); });
     $("#sort-select").addEventListener("change", (e) => { ui.sort = e.target.value; renderExpenses(); });
+
+    // budgets
+    $("#overall-budget-input").addEventListener("change", saveOverallBudget);
 
     // savings
     $("#goal-form").addEventListener("submit", submitGoalForm);

@@ -47,6 +47,8 @@
         <button id="dash-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
       </div>
 
+      <div id="budget-alert" class="alert-banner" role="status" hidden></div>
+
       <div id="kpi-row" class="kpi-row">
         <!-- stat tiles rendered by app.js -->
       </div>
@@ -105,6 +107,25 @@
         <button id="bud-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
       </div>
       <div class="card">
+        <h3 class="card-title">Overall monthly budget</h3>
+        <p class="card-subtitle">One limit for everything you spend in a month. Set it here and the dashboard tracks all your spending against it — category budgets below are optional.</p>
+        <div class="overall-budget">
+          <div class="budget-name">
+            <span class="cat-dot overall-dot"></span>All spending
+          </div>
+          <div>
+            <div class="meter"><div class="meter-fill" id="overall-meter-fill"></div></div>
+            <div class="meter-caption" id="overall-caption"></div>
+          </div>
+          <div class="budget-input-wrap">
+            <span class="currency" id="overall-currency"></span>
+            <input id="overall-budget-input" class="input" type="number" min="0" step="1" placeholder="0" aria-label="Overall monthly budget" />
+          </div>
+        </div>
+        <p class="allocation-note" id="allocation-note"></p>
+      </div>
+
+      <div class="card">
         <h3 class="card-title">Monthly budgets by category</h3>
         <p class="card-subtitle">Set a monthly limit per category. Meters show this month's spending against each limit.</p>
         <div id="budget-list"></div>
@@ -137,7 +158,8 @@
     <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
       <div class="card">
         <h3 class="card-title">Budgeting period</h3>
-        <p class="card-subtitle">The semester and academic year this budget covers — shown in the header. All amounts are in Philippine pesos (₱).</p>
+        <p class="card-subtitle">The semester and academic year this budget covers — shown in the header.</p>
+        
         <div class="settings-row">
           <label for="set-semester">Semester</label>
           <select id="set-semester" class="input">

@@ -3,7 +3,10 @@
 
    Two chart forms, per the data's job:
    - categoryBars: horizontal bars, one fixed color per category
-     (identity), value direct-labeled at each bar end.
+     (identity), value direct-labeled on the row. When a category
+     has a budget, a tick marks the limit and any overspend is
+     drawn as a hatched critical-red segment past that tick —
+     color, texture, an alert glyph, and text all say "over".
    - monthlyColumns: single-series columns in the accent hue
      (magnitude over time), month labels below, values on hover.
 
@@ -90,9 +93,39 @@ const Charts = (() => {
     mark.addEventListener("mouseleave", hideTooltip);
   }
 
+  /* ---------- over-budget marks ---------- */
+
+  /* Diagonal stripes over the overspent segment, so "over budget"
+     survives grayscale and color-vision differences. */
+  function hatchDefs() {
+    const defs = el("defs");
+    const pattern = el("pattern", {
+      id: "over-hatch",
+      width: 6, height: 6,
+      patternUnits: "userSpaceOnUse",
+      patternTransform: "rotate(45)",
+    });
+    pattern.appendChild(el("line", { x1: 0, y1: 0, x2: 0, y2: 6, class: "hatch-line" }));
+    defs.appendChild(pattern);
+    return defs;
+  }
+
+  /* The "alert" icon from icons.js, as a nested SVG we can place. */
+  function alertGlyph(x, y, size) {
+    const g = el("svg", {
+      x, y, width: size, height: size,
+      viewBox: "0 0 24 24", class: "over-icon", "aria-hidden": "true",
+    });
+    g.appendChild(el("path", { d: "M10.3 3.6L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0z" }));
+    g.appendChild(el("path", { d: "M12 9v4M12 17h.01" }));
+    return g;
+  }
+
   /* =============================================================
      Horizontal category bars.
-     items: [{ label, value, color, valueText }] — pre-sorted.
+     items: [{ label, value, color, valueText,
+               budget?, overText?, tooltip? }] — pre-sorted.
+     A row is "over" when budget > 0 && value > budget.
      ============================================================= */
 
   function categoryBars(container, items) {
@@ -103,44 +136,86 @@ const Charts = (() => {
     }
 
     const shown = items.filter((d) => d.value > 0);
-    const barH = 16, rowH = 44, labelH = 16;
-    const width = 440, padLeft = 8, padRight = 74;
+    const isOver = (d) => d.budget > 0 && d.value > d.budget;
+    const barH = 16, rowH = 46, labelH = 16;
+    // padLeft 0 puts labels, bars, and the baseline flush with the card's
+    // text column; padRight only reserves room for a tick at full scale
+    const width = 440, padLeft = 0, padRight = 3;
     const height = shown.length * rowH + 8;
-    const max = Math.max(...shown.map((d) => d.value));
+    // scale to the larger of spend and budget, so a limit that hasn't
+    // been reached yet still has a visible tick on the row
+    const max = Math.max(...shown.map((d) => Math.max(d.value, d.budget || 0)));
     const plotW = width - padLeft - padRight;
 
     const svg = el("svg", {
       class: "chart-svg",
       viewBox: `0 0 ${width} ${height}`,
       role: "img",
-      "aria-label": "Bar chart of spending by category",
+      "aria-label": "Bar chart of spending by category against each category's budget",
     });
+
+    if (shown.some(isOver)) svg.appendChild(hatchDefs());
 
     shown.forEach((d, i) => {
       const y = i * rowH + 4;
+      const barY = y + labelH + 2;
+      const over = isOver(d);
       const w = Math.max(3, (d.value / max) * plotW);
+      const budgetW = d.budget > 0 ? (d.budget / max) * plotW : 0;
 
-      // category name above its bar (text in ink tokens, not series color)
-      svg.appendChild(el("text", { x: padLeft, y: y + labelH - 4, class: "cat-label" }, d.label));
-
-      const bar = el("path", { d: roundedRect(padLeft, y + labelH, w, barH, 4, "right"), fill: d.color });
-      attachHover(bar, d.label, d.valueText);
-      svg.appendChild(bar);
-
-      // direct value label at the bar end
+      // row header: category name left, amount right — over-budget rows
+      // carry an alert glyph and say by how much, in words
+      if (over) svg.appendChild(alertGlyph(padLeft, y + 3, 13));
       svg.appendChild(el("text", {
-        x: padLeft + w + 8,
-        y: y + labelH + barH - 4,
-        class: "value-label",
-      }, d.valueText));
+        x: padLeft + (over ? 17 : 0), y: y + labelH - 3, class: "cat-label",
+      }, d.label));
+
+      const amount = el("text", { x: width, y: y + labelH - 3, "text-anchor": "end" });
+      amount.appendChild(el("tspan", { class: "value-label" }, d.valueText));
+      if (over) amount.appendChild(el("tspan", { class: "over-label", dx: 7 }, `over by ${d.overText}`));
+      svg.appendChild(amount);
+
+      // bar: color up to the limit, hatched critical red past it.
+      // A 2px gap at the limit keeps the two segments legible even when
+      // the category's own color is close to the critical red.
+      const group = el("g");
+      if (over) {
+        const gap = 2;
+        const baseW = Math.max(2, budgetW);
+        group.appendChild(el("path", { d: roundedRect(padLeft, barY, baseW, barH, 0, "right"), fill: d.color }));
+        const spill = roundedRect(padLeft + baseW + gap, barY, Math.max(3, w - baseW - gap), barH, 4, "right");
+        group.appendChild(el("path", { d: spill, class: "over-fill" }));
+        group.appendChild(el("path", { d: spill, fill: "url(#over-hatch)" }));
+      } else {
+        group.appendChild(el("path", { d: roundedRect(padLeft, barY, w, barH, 4, "right"), fill: d.color }));
+      }
+      attachHover(group, d.label, d.tooltip || d.valueText);
+      svg.appendChild(group);
+
+      // budget tick — sits exactly where the bar turns red on over rows
+      if (d.budget > 0) {
+        const bx = padLeft + budgetW;
+        svg.appendChild(el("line", {
+          x1: bx, y1: barY - 4, x2: bx, y2: barY + barH + 4, class: "budget-marker",
+        }));
+      }
     });
 
-    // baseline
+    // baseline (half a unit in, so the 1px stroke isn't clipped by the edge)
     svg.appendChild(el("line", {
-      x1: padLeft, y1: 4, x2: padLeft, y2: height - 4, class: "baseline",
+      x1: padLeft + 0.5, y1: 4, x2: padLeft + 0.5, y2: height - 4, class: "baseline",
     }));
 
     container.appendChild(svg);
+
+    if (shown.some((d) => d.budget > 0)) {
+      const legend = document.createElement("div");
+      legend.className = "chart-legend";
+      legend.innerHTML =
+        '<span class="lg-item"><i class="lg-swatch lg-marker"></i>Budget</span>' +
+        '<span class="lg-item"><i class="lg-swatch lg-over"></i>Over budget</span>';
+      container.appendChild(legend);
+    }
   }
 
   /* =============================================================
