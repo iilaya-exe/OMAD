@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="A student budget and expense tracker that runs entirely in your browser." />
+  <meta name="description" content="A simple student budget and expense tracker that runs entirely in your browser." />
   <title>Student Budget &amp; Expense Tracker</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -31,7 +31,6 @@
     <nav class="tabs" role="tablist" aria-label="Main sections">
       <button class="tab active" role="tab" aria-selected="true"  data-tab="dashboard">Dashboard</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="expenses">Expenses</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="budgets">Budgets</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="savings">Savings</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="settings">Settings</button>
     </nav>
@@ -47,7 +46,23 @@
         <button id="dash-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
       </div>
 
-      <div id="budget-alert" class="alert-banner" role="status" hidden></div>
+      <!-- one budget for everything — no category allocation -->
+      <div class="card budget-card">
+        <div class="budget-head">
+          <div class="budget-head-text">
+            <h3 class="card-title">Monthly budget</h3>
+            <p class="card-subtitle">One budget for everything. Set the amount you can spend in a month.</p>
+          </div>
+          <div class="budget-input-wrap">
+            <span class="currency">₱</span>
+            <input id="budget-input" class="input" type="number" min="0" step="1" placeholder="0" aria-label="Monthly budget amount" />
+          </div>
+        </div>
+        <div class="meter meter-lg">
+          <div class="meter-fill" id="budget-meter-fill"></div>
+        </div>
+        <div class="meter-caption" id="budget-caption"></div>
+      </div>
 
       <div id="kpi-row" class="kpi-row">
         <!-- stat tiles rendered by app.js -->
@@ -99,40 +114,6 @@
       </div>
     </section>
 
-    <!-- ============ BUDGETS ============ -->
-    <section id="tab-budgets" class="tab-panel" role="tabpanel" hidden>
-      <div class="month-nav">
-        <button id="bud-prev-month" class="btn btn-ghost icon-only" type="button" aria-label="Previous month"><span data-icon="chevron-left"></span></button>
-        <h2 id="bud-month-label" class="month-label">Month</h2>
-        <button id="bud-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
-      </div>
-      <div class="card">
-        <h3 class="card-title">Overall monthly budget</h3>
-        <p class="card-subtitle">One limit for everything you spend in a month. Set it here and the dashboard tracks all your spending against it — category budgets below are optional.</p>
-        <div class="overall-budget">
-          <div class="budget-name">
-            <span class="cat-dot overall-dot"></span>All spending
-          </div>
-          <div>
-            <div class="meter"><div class="meter-fill" id="overall-meter-fill"></div></div>
-            <div class="meter-caption" id="overall-caption"></div>
-          </div>
-          <div class="budget-input-wrap">
-            <span class="currency" id="overall-currency"></span>
-            <input id="overall-budget-input" class="input" type="number" min="0" step="1" placeholder="0" aria-label="Overall monthly budget" />
-          </div>
-        </div>
-        <p class="allocation-note" id="allocation-note"></p>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">Monthly budgets by category</h3>
-        <p class="card-subtitle">Set a monthly limit per category. Meters show this month's spending against each limit.</p>
-        <div id="budget-list"></div>
-        <div class="budget-total" id="budget-total"></div>
-      </div>
-    </section>
-
     <!-- ============ SAVINGS ============ -->
     <section id="tab-savings" class="tab-panel" role="tabpanel" hidden>
       <div class="card">
@@ -158,8 +139,7 @@
     <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
       <div class="card">
         <h3 class="card-title">Budgeting period</h3>
-        <p class="card-subtitle">The semester and academic year this budget covers — shown in the header.</p>
-        
+        <p class="card-subtitle">The semester and academic year this budget covers — shown in the header. All amounts are in Philippine pesos (₱).</p>
         <div class="settings-row">
           <label for="set-semester">Semester</label>
           <select id="set-semester" class="input">
@@ -173,7 +153,7 @@
           <select id="set-ay" class="input"></select>
         </div>
         <div class="period-actions">
-          <p class="card-subtitle">Finished this term? Starting a new period moves everything — expenses, budgets, and savings goals — into History below, then takes you back to the setup screen.</p>
+          <p class="card-subtitle">Finished this term? Starting a new period moves everything — expenses, your budget, and savings goals — into History below, then takes you back to the setup screen.</p>
           <button id="new-period-btn" class="btn btn-primary" type="button">
             <span data-icon="plus" data-icon-size="15"></span>Start a new budgeting period
           </button>
@@ -209,16 +189,6 @@
           <input id="f-date" class="input" type="date" required />
         </div>
         <div class="form-row">
-          <label for="f-method">Payment method</label>
-          <select id="f-method" class="input">
-            <option value="Cash">Cash</option>
-            <option value="Debit card">Debit card</option>
-            <option value="Credit card">Credit card</option>
-            <option value="Mobile / e-wallet">Mobile / e-wallet</option>
-            <option value="Bank transfer">Bank transfer</option>
-          </select>
-        </div>
-        <div class="form-row">
           <label for="f-note">Note <span class="optional">(optional)</span></label>
           <input id="f-note" class="input" type="text" maxlength="120" placeholder="e.g. lunch with study group" />
         </div>
@@ -236,7 +206,7 @@
     <div class="onboarding-card">
       <span class="logo-mark lg" data-icon="wallet" data-icon-size="26"></span>
       <h2>Welcome to Student Budget</h2>
-      <p>Before you start, tell us which school term this budget covers. You can change it anytime in Settings.</p>
+      <p>Tell us which school term this budget covers and how much you can spend each month. Both can be changed later.</p>
       <div class="form-row">
         <label for="ob-semester">Semester</label>
         <select id="ob-semester" class="input">
@@ -248,6 +218,10 @@
       <div class="form-row">
         <label for="ob-ay">Academic year</label>
         <select id="ob-ay" class="input"></select>
+      </div>
+      <div class="form-row">
+        <label for="ob-budget">Monthly budget <span class="optional">(optional)</span></label>
+        <input id="ob-budget" class="input" type="number" min="0" step="1" placeholder="e.g. 12000" />
       </div>
       <button id="ob-start" class="btn btn-primary btn-block" type="button">Start budgeting</button>
     </div>

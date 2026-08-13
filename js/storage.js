@@ -2,6 +2,10 @@
    storage.js — data model + localStorage persistence
    Amounts are stored as integer centavos to avoid floating-point
    rounding bugs (e.g. 0.1 + 0.2 !== 0.3).
+
+   The model keeps ONE budget for everything (budgetCents) — there
+   is no per-category allocation. Categories are labels only: they
+   colour the charts and lists, nothing is allotted to them.
    ============================================================= */
 
 "use strict";
@@ -29,17 +33,16 @@ const Storage = (() => {
 
   function defaultData() {
     return {
-      version: 1,
+      version: 2,
       settings: {
         currency: CURRENCY,
         theme: "auto",
         period: null, // { semester, academicYear "YYYY-YYYY" } — set during onboarding
       },
-      overallBudgetCents: 0, // one limit for everything in a month (0 = not set)
-      budgets: {},   // { categoryId: centavos }
-      expenses: [],  // { id, amountCents, category, date "YYYY-MM-DD", method, note }
-      goals: [],     // { id, name, targetCents, deadline "YYYY-MM-DD"|"", entries: [{ id, amountCents, date }] }
-      archives: [],  // finished periods: { id, period, archivedAt, expenses, budgets, goals }
+      budgetCents: 0, // one monthly budget for everything (0 = not set)
+      expenses: [],   // { id, amountCents, category, date "YYYY-MM-DD", note }
+      goals: [],      // { id, name, targetCents, deadline "YYYY-MM-DD"|"", entries: [{ id, amountCents, date }] }
+      archives: [],   // finished periods: { id, period, archivedAt, budgetCents, expenses, goals }
     };
   }
 
@@ -89,26 +92,24 @@ const Storage = (() => {
         amountCents: Math.round(e.amountCents),
         category: e.category,
         date: e.date,
-        method: typeof e.method === "string" ? e.method.slice(0, 40) : "Cash",
         note: typeof e.note === "string" ? e.note.slice(0, 120) : "",
       });
     }
     return out;
   }
 
-  function cleanBudgetMap(obj) {
-    const out = {};
-    if (!obj || typeof obj !== "object") return out;
-    for (const [cat, cents] of Object.entries(obj)) {
-      if (VALID_IDS.has(cat) && Number.isFinite(cents) && cents >= 0) {
-        out[cat] = Math.round(cents);
+  /* One number. v1 data kept a { category: cents } map, so anything
+     saved by the older build folds down into a single budget. */
+  function cleanBudget(value, legacyMap) {
+    if (Number.isFinite(value) && value >= 0) return Math.round(value);
+    if (legacyMap && typeof legacyMap === "object") {
+      let total = 0;
+      for (const cents of Object.values(legacyMap)) {
+        if (Number.isFinite(cents) && cents > 0) total += Math.round(cents);
       }
+      return total;
     }
-    return out;
-  }
-
-  function cleanCents(v) {
-    return Number.isFinite(v) && v > 0 ? Math.round(v) : 0;
+    return 0;
   }
 
   function cleanGoalList(list) {
@@ -153,8 +154,7 @@ const Storage = (() => {
       clean.settings.period = cleanPeriod(obj.settings.period);
     }
 
-    clean.overallBudgetCents = cleanCents(obj.overallBudgetCents);
-    clean.budgets = cleanBudgetMap(obj.budgets);
+    clean.budgetCents = cleanBudget(obj.budgetCents, obj.budgets);
     clean.expenses = cleanExpenseList(obj.expenses);
     clean.goals = cleanGoalList(obj.goals);
 
@@ -169,9 +169,8 @@ const Storage = (() => {
           archivedAt: typeof a.archivedAt === "string" && DATE_RE.test(a.archivedAt)
             ? a.archivedAt
             : new Date().toISOString().slice(0, 10),
+          budgetCents: cleanBudget(a.budgetCents, a.budgets),
           expenses: cleanExpenseList(a.expenses),
-          overallBudgetCents: cleanCents(a.overallBudgetCents),
-          budgets: cleanBudgetMap(a.budgets),
           goals: cleanGoalList(a.goals),
         });
       }
@@ -203,7 +202,6 @@ const Storage = (() => {
       { category: "health",        min: 10000,  max: 100000, perMonth: 1,  notes: ["Pharmacy", "Gym fee"] },
       { category: "other",         min: 5000,   max: 50000,  perMonth: 2,  notes: ["Gift", "Haircut", "Laundry"] },
     ];
-    const methods = ["Cash", "Debit card", "Credit card", "Mobile / e-wallet"];
 
     function genExpenses(monthsBackFrom, monthsBackTo, out) {
       for (let m = monthsBackFrom; m <= monthsBackTo; m++) {
@@ -218,7 +216,6 @@ const Storage = (() => {
               amountCents: rand(t.min, t.max),
               category: t.category,
               date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(rand(1, maxDay)).padStart(2, "0")}`,
-              method: methods[rand(0, methods.length - 1)],
               note: t.notes[rand(0, t.notes.length - 1)],
             });
           }
@@ -234,13 +231,7 @@ const Storage = (() => {
       academicYear: `${startYear}-${startYear + 1}`,
     };
 
-    // a couple of these run tight on purpose, so the demo shows what an
-    // over-budget category looks like on the dashboard
-    data.overallBudgetCents = 1600000;
-    data.budgets = {
-      food: 280000, groceries: 320000, transport: 50000, housing: 450000,
-      education: 150000, entertainment: 120000, health: 100000, other: 100000,
-    };
+    data.budgetCents = 1800000; // ₱18,000 a month, all-in
 
     genExpenses(0, 2, data.expenses);
 
@@ -281,12 +272,8 @@ const Storage = (() => {
       id: uid(),
       period: prev,
       archivedAt: iso(new Date(now.getFullYear(), now.getMonth() - 3, 20)),
+      budgetCents: 1650000,
       expenses: archExpenses,
-      overallBudgetCents: 1600000,
-      budgets: {
-        food: 300000, groceries: 350000, transport: 100000, housing: 480000,
-        education: 300000, entertainment: 120000, health: 100000, other: 80000,
-      },
       goals: [
         mkGoal("Concert ticket", 150000, "", [80000, 70000]), // completed
         mkGoal("Books fund", 100000, "", [60000]),
