@@ -46,44 +46,50 @@
         <button id="dash-next-month" class="btn btn-ghost icon-only" type="button" aria-label="Next month"><span data-icon="chevron-right"></span></button>
       </div>
 
-      <!-- one budget for everything — no category allocation -->
-      <div class="card budget-card">
-        <div class="budget-head">
-          <div class="budget-head-text">
-            <h3 class="card-title">Monthly budget</h3>
-            <p class="card-subtitle">One budget for everything. Set the amount you can spend in a month.</p>
-          </div>
-          <div class="budget-input-wrap">
-            <span class="currency">₱</span>
-            <input id="budget-input" class="input" type="number" min="0" step="1" placeholder="0" aria-label="Monthly budget amount" />
-          </div>
-        </div>
-        <div class="meter meter-lg">
-          <div class="meter-fill" id="budget-meter-fill"></div>
-        </div>
-        <div class="meter-caption" id="budget-caption"></div>
-      </div>
+      <!-- bento: one mosaic, tiles sized by how much each one matters -->
+      <div class="bento">
 
-      <div id="kpi-row" class="kpi-row">
-        <!-- stat tiles rendered by app.js -->
-      </div>
+        <!-- hero tile: the single budget, no category allocation -->
+        <section class="card bento-hero budget-card" aria-labelledby="budget-title">
+          <div class="bento-head">
+            <div class="budget-head-text">
+              <h3 class="card-title" id="budget-title">Monthly budget</h3>
+              <p class="card-subtitle">One budget for everything.</p>
+            </div>
+            <div class="budget-input-wrap">
+              <span class="currency">₱</span>
+              <input id="budget-input" class="input" type="number" min="0" step="1" placeholder="0" aria-label="Monthly budget amount" />
+            </div>
+          </div>
+          <div class="budget-figure">
+            <div class="figure-label" id="budget-hero-label">Left to spend</div>
+            <div class="figure-value" id="budget-hero-value">—</div>
+          </div>
+          <div class="meter meter-lg">
+            <div class="meter-fill" id="budget-meter-fill"></div>
+          </div>
+          <div class="meter-caption" id="budget-caption"></div>
+        </section>
 
-      <div class="chart-grid">
-        <div class="card">
+        <!-- stat tiles rendered by app.js straight into the mosaic -->
+        <div id="kpi-row" class="kpi-row"></div>
+
+        <div class="card bento-wide">
           <h3 class="card-title">Spending by category</h3>
           <p class="card-subtitle" id="cat-chart-subtitle"></p>
           <div id="category-chart" class="chart-host"></div>
         </div>
-        <div class="card">
+
+        <div class="card bento-side">
           <h3 class="card-title">Last 6 months</h3>
           <p class="card-subtitle">Total spend per month</p>
           <div id="trend-chart" class="chart-host"></div>
         </div>
-      </div>
 
-      <div class="card">
-        <h3 class="card-title">Recent expenses</h3>
-        <div id="recent-expenses"></div>
+        <div class="card bento-full">
+          <h3 class="card-title">Recent expenses</h3>
+          <div id="recent-expenses"></div>
+        </div>
       </div>
     </section>
 

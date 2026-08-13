@@ -188,6 +188,17 @@ body {
     inset 0 1px 0 var(--edge-hi),
     0 1px 0 var(--edge-lo),
     0 10px 22px -14px var(--sh-dark);
+  transition: box-shadow 0.3s ease;
+}
+
+/* elevation tier 3: once content slides under it, the bar casts a
+   deeper shadow — the cue that it is floating above the page */
+body.scrolled .app-header {
+  box-shadow:
+    inset 0 1px 0 var(--edge-hi),
+    0 1px 0 var(--edge-lo),
+    0 22px 34px -20px var(--sh-dark),
+    0 10px 20px -16px rgba(0, 0, 0, 0.3);
 }
 
 .header-inner {
@@ -318,8 +329,9 @@ body {
 
 .tab-panel.active { animation: panel-in 0.24s ease both; }
 
+/* panels arrive from slightly further away, not just from below */
 @keyframes panel-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px) scale(0.988); }
   to   { opacity: 1; transform: none; }
 }
 
@@ -354,17 +366,45 @@ body {
   font-size: 0.83rem;
 }
 
-.chart-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-@media (max-width: 720px) {
-  .chart-grid { grid-template-columns: 1fr; }
-}
-
 .chart-host { overflow-x: auto; }
+
+/* ---------- bento mosaic (dashboard only) ----------
+   One continuous 12-column grid. Tile span follows importance:
+   the budget anchors it at 6×2, the four stats are 3-wide
+   squares, the charts split 7/5, the list runs the full width.
+   `perspective` here is what gives the tiles somewhere to move
+   in depth on hover. */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 18px;
+  perspective: 1400px;
+}
+
+.bento > *, .bento .stat-tile { margin-bottom: 0; min-width: 0; }
+
+/* the stat container dissolves so its tiles join the mosaic */
+.kpi-row { display: contents; }
+
+.bento-hero  { grid-column: span 6; grid-row: span 2; }
+.stat-tile   { grid-column: span 3; }
+.bento-wide  { grid-column: span 7; }
+.bento-side  { grid-column: span 5; }
+.bento-full  { grid-column: span 12; }
+
+.bento .card { display: flex; flex-direction: column; }
+
+@media (max-width: 1000px) {
+  .bento { grid-template-columns: repeat(6, 1fr); }
+  .bento-hero { grid-column: span 6; grid-row: auto; }
+  .bento-wide, .bento-side, .bento-full { grid-column: span 6; }
+}
+
+@media (max-width: 560px) {
+  .bento { grid-template-columns: 1fr; gap: 14px; }
+  .bento-hero, .stat-tile, .bento-wide, .bento-side, .bento-full { grid-column: 1 / -1; }
+}
 
 /* ---------- month nav ---------- */
 
@@ -396,7 +436,24 @@ body {
 
 /* ---------- the single monthly budget ---------- */
 
-.budget-head {
+/* hero tile: elevation tier 2 — it sits nearer than the rest, and
+   its highlight tracks the pointer so the light source feels real
+   (app.js writes --mx/--my/--rx/--ry; all default to a resting pose) */
+.bento-hero {
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-lift);
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+
+.bento-hero.is-tracking { transition: transform 0.1s linear, box-shadow 0.25s ease; }
+
+.bento-hero::before {
+  background:
+    radial-gradient(460px 300px at var(--mx, 28%) var(--my, 0%), var(--gloss), transparent 68%),
+    linear-gradient(180deg, var(--gloss), rgba(255, 255, 255, 0) 42%);
+}
+
+.bento-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -405,7 +462,37 @@ body {
 }
 
 .budget-head-text { min-width: 0; }
-.budget-head .card-subtitle { margin-bottom: 14px; }
+.bento-head .card-subtitle { margin-bottom: 14px; }
+
+/* the big read: fills whatever height the 2-row span gives it */
+.budget-figure {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 0 18px;
+}
+
+.figure-label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-shadow: var(--letterpress);
+}
+
+.figure-value {
+  font-size: clamp(2rem, 4.6vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+  text-shadow: var(--letterpress);
+}
+
+.figure-value.over { color: var(--status-critical); }
 
 /* the amount sits in a recessed slot with an embossed currency mark */
 .budget-input-wrap {
@@ -443,17 +530,6 @@ body {
 
 /* ---------- KPI stat tiles ---------- */
 
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-@media (max-width: 720px) {
-  .kpi-row { grid-template-columns: repeat(2, 1fr); }
-}
-
 .stat-tile {
   position: relative;
   background:
@@ -465,8 +541,9 @@ body {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+/* hover moves the tile toward the viewer, not just up the page */
 .stat-tile:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(16px);
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-lift);
 }
 

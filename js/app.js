@@ -218,6 +218,21 @@
     fill.style.width = pct + "%";
     fill.style.background = over ? "var(--status-critical)" : "var(--accent)";
 
+    // the hero figure: the one number worth reading from across the room
+    const heroLabel = $("#budget-hero-label");
+    const heroValue = $("#budget-hero-value");
+    heroValue.classList.toggle("over", over);
+    if (budget <= 0) {
+      heroLabel.textContent = "Spent this month";
+      heroValue.textContent = fmtMoney(spent);
+    } else if (over) {
+      heroLabel.textContent = "Over budget by";
+      heroValue.textContent = fmtMoney(spent - budget);
+    } else {
+      heroLabel.textContent = "Left to spend";
+      heroValue.textContent = fmtMoney(budget - spent);
+    }
+
     if (budget <= 0) {
       caption.textContent = spent > 0
         ? `${fmtMoney(spent)} spent this month — set a budget to track it.`
@@ -245,8 +260,6 @@
 
     const monthExpenses = expensesInMonth(ui.month);
     const total = sumCents(monthExpenses);
-    const budget = data.budgetCents;
-    const remaining = budget - total;
 
     renderBudget(total);
 
@@ -262,19 +275,19 @@
     for (const e of monthExpenses) byCat[e.category] = (byCat[e.category] || 0) + e.amountCents;
     const topCat = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
 
+    // biggest single expense of the month
+    const biggest = monthExpenses.reduce((max, e) => (!max || e.amountCents > max.amountCents ? e : max), null);
+
+    // "left to spend" is the hero tile's job now, so it isn't repeated here
     const tiles = [
       { icon: "receipt", tint: "blue", label: "Spent this month", value: fmtMoney(total), hint: `${monthExpenses.length} expense${monthExpenses.length === 1 ? "" : "s"}` },
-      budget > 0
-        ? {
-            icon: "wallet", tint: "green", label: "Left to spend", value: fmtMoney(remaining),
-            hint: remaining >= 0 ? `of ${fmtMoney(budget)} budgeted` : "over budget",
-            hintClass: remaining >= 0 ? "good" : "bad",
-          }
-        : { icon: "wallet", tint: "green", label: "Left to spend", value: "—", hint: "set a budget above" },
       topCat
         ? { icon: "tag", tint: "violet", label: "Top category", value: catById(topCat[0]).name, hint: fmtMoney(topCat[1]) }
         : { icon: "tag", tint: "violet", label: "Top category", value: "—", hint: "no expenses yet" },
       { icon: "calendar", tint: "orange", label: "Average per day", value: fmtMoney(avgPerDay), hint: isCurrent ? `over ${daysElapsed} day${daysElapsed === 1 ? "" : "s"} so far` : "full month" },
+      biggest
+        ? { icon: "wallet", tint: "green", label: "Biggest expense", value: fmtMoney(biggest.amountCents), hint: biggest.note || catById(biggest.category).name }
+        : { icon: "wallet", tint: "green", label: "Biggest expense", value: "—", hint: "no expenses yet" },
     ];
 
     const row = $("#kpi-row");
@@ -830,6 +843,60 @@
   }
 
   /* =============================================================
+     Spatial depth
+
+     Depth is used as a hierarchy, not as an effect: the header
+     drops a deeper shadow once content slides under it, and the
+     hero tile carries a specular highlight that follows the
+     pointer while leaning a couple of degrees toward it. Skipped
+     entirely for touch pointers and reduced-motion users.
+     ============================================================= */
+
+  function initSpatial() {
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        document.body.classList.toggle("scrolled", window.scrollY > 4);
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const hero = document.querySelector(".bento-hero");
+    if (!hero) return;
+
+    let frame = null;
+    hero.addEventListener("pointermove", (evt) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        const r = hero.getBoundingClientRect();
+        const px = (evt.clientX - r.left) / r.width;
+        const py = (evt.clientY - r.top) / r.height;
+        hero.classList.add("is-tracking");
+        hero.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+        hero.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+        hero.style.setProperty("--ry", ((px - 0.5) * 3).toFixed(2) + "deg");
+        hero.style.setProperty("--rx", ((0.5 - py) * 2.4).toFixed(2) + "deg");
+      });
+    });
+
+    hero.addEventListener("pointerleave", () => {
+      hero.classList.remove("is-tracking");
+      hero.style.removeProperty("--rx");   // back to the resting pose
+      hero.style.removeProperty("--ry");
+      hero.style.removeProperty("--mx");
+      hero.style.removeProperty("--my");
+    });
+  }
+
+  /* =============================================================
      Wiring
      ============================================================= */
 
@@ -918,6 +985,8 @@
 
     // settings
     $("#new-period-btn").addEventListener("click", startNewPeriod);
+
+    initSpatial();
 
     // follow OS theme changes while preference is "auto"
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
