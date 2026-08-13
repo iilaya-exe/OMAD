@@ -882,8 +882,8 @@
         hero.classList.add("is-tracking");
         hero.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
         hero.style.setProperty("--my", (py * 100).toFixed(1) + "%");
-        hero.style.setProperty("--ry", ((px - 0.5) * 3).toFixed(2) + "deg");
-        hero.style.setProperty("--rx", ((0.5 - py) * 2.4).toFixed(2) + "deg");
+        hero.style.setProperty("--ry", ((px - 0.5) * 1.6).toFixed(2) + "deg");
+        hero.style.setProperty("--rx", ((0.5 - py) * 1.2).toFixed(2) + "deg");
       });
     });
 

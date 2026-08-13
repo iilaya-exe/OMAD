@@ -1,15 +1,18 @@
 /* =============================================================
    Student Budget & Expense Tracker — styles
 
-   Visual language: neumorphism + skeuomorphism, harmonised.
+   Visual language: neumorphism + skeuomorphism, held to a
+   minimalist budget — the material is felt, not announced.
    - Neumorphic geometry: surfaces are the same material as the
      page, shaped only by a paired light/dark shadow. Things you
      act on are extruded; things that hold a value (fields,
      meter tracks, wells) are recessed.
-   - Skeuomorphic detail: a bevelled top edge and gloss on every
-     raised face, a fine grain over the whole page, glass meter
-     tubes with a specular band, letterpress headings, and
-     buttons that physically depress when clicked.
+   - Skeuomorphic detail, rationed: one bevelled top edge, a low
+     gloss, a fine grain, glass meter tubes, letterpress on
+     headings only, and buttons that depress when clicked.
+   - Restraint rules: shine never competes with text, small type
+     carries no letterpress, and only elements you can act on
+     respond to hover.
 
    Theme tokens: light values on :root, dark values under
    [data-theme="dark"] (app.js resolves "auto" to an explicit
@@ -30,43 +33,46 @@
   color-scheme: light;
 
   /* ---- material: one clay-grey body, lit from the top-left ---- */
-  --page: #e5e9ef;
-  --surface: #eaedf3;
-  --surface-hi: #f6f8fb;      /* gloss top of a raised face      */
-  --field: #e0e4ea;           /* recessed well                   */
-  --field-deep: #d9dde4;      /* deepest recess (meter tracks)   */
-  --sh-dark: rgba(157, 170, 190, 0.62);
-  --sh-light: rgba(255, 255, 255, 0.95);
-  --edge-hi: rgba(255, 255, 255, 0.9);   /* bevel: lit edge      */
-  --edge-lo: rgba(120, 133, 155, 0.22);  /* bevel: shaded edge   */
-  --gloss: rgba(255, 255, 255, 0.55);
-  --letterpress: 0 1px 0 rgba(255, 255, 255, 0.8);
+  --page: #e6e9ee;
+  --surface: #ebeef2;
+  --surface-hi: #f1f3f7;      /* faint gloss on a raised face    */
+  --field: #e1e4e9;           /* recessed well                   */
+  --field-deep: #dadde3;      /* deepest recess (meter tracks)   */
+  --sh-dark: rgba(155, 166, 184, 0.42);
+  --sh-light: rgba(255, 255, 255, 0.82);
+  --edge-hi: rgba(255, 255, 255, 0.7);   /* bevel: lit edge      */
+  --edge-lo: rgba(120, 133, 155, 0.15);  /* bevel: shaded edge   */
+  --gloss: rgba(255, 255, 255, 0.3);
+  --letterpress: 0 1px 0 rgba(255, 255, 255, 0.5);
 
-  /* ink */
+  /* ink — three steps, each one still clearing 4.5:1 on the
+     surfaces it actually lands on */
   --text-primary: #232830;
-  --text-secondary: #545d6b;
-  --text-muted: #7b8593;
+  --text-secondary: #454e5c;
+  --text-muted: #5b6472;
   --grid: rgba(120, 133, 155, 0.18);
   --baseline: rgba(120, 133, 155, 0.34);
 
-  /* accent (sequential blue) */
-  --accent: #2a72d4;
-  --accent-hi: #4d95ec;
-  --accent-lo: #1f5cb4;
-  --accent-deep: #17488e;
-  --accent-soft: #cadffa;
-  --accent-wash: rgba(42, 114, 212, 0.10);
-  --accent-ring: rgba(42, 114, 212, 0.30);
+  /* accent splits in two jobs: --accent is ink and data (it has to
+     pass on light surfaces), while -hi/-lo/-deep are the button's
+     material ramp (they have to pass under white text) */
+  --accent: #2a62aa;
+  --accent-hi: #3670b8;
+  --accent-lo: #235291;
+  --accent-deep: #1a3f70;
+  --accent-soft: #d3e2f5;
+  --accent-wash: rgba(42, 98, 170, 0.08);
+  --accent-ring: rgba(42, 98, 170, 0.26);
 
   /* status (fixed, never themed as series) */
   --status-good: #0f9d55;
   --status-good-text: #0a6c3c;
   --status-warning: #e0a010;
-  --status-critical: #cc3b3b;
+  --status-critical: #b93232;
 
   /* categorical series slots (fixed order — one per category) */
   --cat-1: #2a72d4; /* Food & Dining   — blue    */
-  --cat-2: #12a077; /* Groceries       — aqua    */
+  --cat-2: #0e8a66; /* Groceries       — aqua    */
   --cat-3: #d99400; /* Transport       — yellow  */
   --cat-4: #17803d; /* Housing & Utils — green   */
   --cat-5: #5a45b0; /* Education       — violet  */
@@ -75,35 +81,35 @@
   --cat-8: #dd6229; /* Other           — orange  */
 
   /* fine grain, baked into an inline SVG so the app stays offline */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.20'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.12'/%3E%3C/svg%3E");
 
-  /* ---- elevation recipes ---- */
-  --nm-raise:     7px 7px 15px var(--sh-dark), -7px -7px 15px var(--sh-light);
-  --nm-raise-sm:  4px 4px 9px var(--sh-dark),  -4px -4px 9px var(--sh-light);
-  --nm-raise-lift: 10px 12px 22px var(--sh-dark), -8px -8px 18px var(--sh-light);
-  --nm-press:     inset 4px 4px 8px var(--sh-dark), inset -4px -4px 8px var(--sh-light);
-  --nm-press-sm:  inset 2px 2px 5px var(--sh-dark), inset -2px -2px 5px var(--sh-light);
-  --nm-float:     16px 20px 40px rgba(94, 108, 130, 0.42), -10px -10px 26px var(--sh-light);
+  /* ---- elevation recipes: short throws, wide falloff ---- */
+  --nm-raise:     5px 5px 12px var(--sh-dark), -5px -5px 12px var(--sh-light);
+  --nm-raise-sm:  3px 3px 7px var(--sh-dark),  -3px -3px 7px var(--sh-light);
+  --nm-raise-lift: 7px 9px 18px var(--sh-dark), -6px -6px 14px var(--sh-light);
+  --nm-press:     inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light);
+  --nm-press-sm:  inset 2px 2px 4px var(--sh-dark), inset -2px -2px 4px var(--sh-light);
+  --nm-float:     12px 16px 32px rgba(94, 108, 130, 0.3), -8px -8px 20px var(--sh-light);
 
-  --radius: 18px;
+  --radius: 16px;
   --radius-sm: 12px;
-  --radius-xs: 9px;
+  --radius-xs: 10px;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --page: #22262c;
-  --surface: #262b32;
-  --surface-hi: #333944;
-  --field: #1e2228;
-  --field-deep: #191d22;
-  --sh-dark: rgba(0, 0, 0, 0.62);
-  --sh-light: rgba(255, 255, 255, 0.055);
-  --edge-hi: rgba(255, 255, 255, 0.10);
-  --edge-lo: rgba(0, 0, 0, 0.55);
-  --gloss: rgba(255, 255, 255, 0.07);
-  --letterpress: 0 1px 0 rgba(0, 0, 0, 0.55);
+  --page: #23262b;
+  --surface: #272b31;
+  --surface-hi: #2d3138;
+  --field: #1f2227;
+  --field-deep: #1a1d21;
+  --sh-dark: rgba(0, 0, 0, 0.45);
+  --sh-light: rgba(255, 255, 255, 0.04);
+  --edge-hi: rgba(255, 255, 255, 0.07);
+  --edge-lo: rgba(0, 0, 0, 0.4);
+  --gloss: rgba(255, 255, 255, 0.045);
+  --letterpress: 0 1px 0 rgba(0, 0, 0, 0.4);
 
   --text-primary: #f1f3f7;
   --text-secondary: #bcc4d0;
@@ -111,18 +117,19 @@
   --grid: rgba(255, 255, 255, 0.09);
   --baseline: rgba(255, 255, 255, 0.2);
 
-  --accent: #4a92ea;
-  --accent-hi: #6aa8f2;
-  --accent-lo: #2f6fc4;
-  --accent-deep: #1f5199;
-  --accent-soft: #1c4d8f;
-  --accent-wash: rgba(74, 146, 234, 0.15);
-  --accent-ring: rgba(74, 146, 234, 0.40);
+  /* same split: light enough to read as ink, dark enough under white */
+  --accent: #6b9de0;
+  --accent-hi: #4777b3;
+  --accent-lo: #38618f;
+  --accent-deep: #2a4c73;
+  --accent-soft: #23507f;
+  --accent-wash: rgba(107, 157, 224, 0.13);
+  --accent-ring: rgba(107, 157, 224, 0.34);
 
   --status-good: #22b06a;
   --status-good-text: #3ecb85;
   --status-warning: #f0b429;
-  --status-critical: #e26060;
+  --status-critical: #ec7a7a;
 
   --cat-1: #4a92ea;
   --cat-2: #1fb98a;
@@ -133,9 +140,9 @@
   --cat-7: #e07fa8;
   --cat-8: #e8783f;
 
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.30'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.18'/%3E%3C/svg%3E");
 
-  --nm-float: 18px 22px 44px rgba(0, 0, 0, 0.72), -10px -10px 26px var(--sh-light);
+  --nm-float: 14px 18px 36px rgba(0, 0, 0, 0.55), -8px -8px 20px var(--sh-light);
 }
 
 * { box-sizing: border-box; }
@@ -183,7 +190,7 @@ body {
   z-index: 20;
   background:
     var(--grain) repeat,
-    linear-gradient(180deg, var(--surface-hi), var(--surface) 70%, var(--page));
+    linear-gradient(180deg, var(--surface), var(--page));
   box-shadow:
     inset 0 1px 0 var(--edge-hi),
     0 1px 0 var(--edge-lo),
@@ -212,9 +219,9 @@ body.scrolled .app-header {
 }
 
 .app-title {
-  font-size: 1.1rem;
+  font-size: 1.06rem;
   margin: 0;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
@@ -222,34 +229,32 @@ body.scrolled .app-header {
   text-shadow: var(--letterpress);
 }
 
-/* the logo reads as an enamelled badge: gradient body, specular
-   top, thin dark rim, and a soft drop shadow beneath */
+/* an enamelled badge — the one place a full gradient is spent */
 .logo-mark {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
+  border-radius: 10px;
   color: #ffffff;
-  background: linear-gradient(160deg, var(--accent-hi), var(--accent) 48%, var(--accent-deep));
+  background: linear-gradient(160deg, var(--accent-hi), var(--accent) 55%, var(--accent-lo));
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.28),
-    3px 4px 9px var(--sh-dark),
-    -2px -2px 6px var(--sh-light);
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    2px 3px 7px var(--sh-dark),
+    -2px -2px 5px var(--sh-light);
   flex: none;
 }
 
-.logo-mark svg { position: relative; z-index: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3)); }
+.logo-mark svg { position: relative; z-index: 1; }
 
 .header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
 
 /* engraved pill */
 .period-badge {
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 550;
   letter-spacing: 0.01em;
   color: var(--accent);
   background: var(--field);
@@ -294,15 +299,14 @@ body.scrolled .app-header {
   appearance: none;
   background: none;
   border: none;
-  border-radius: 10px;
+  border-radius: 9px;
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  padding: 6px 16px;
+  font-size: 0.87rem;
+  font-weight: 550;
+  padding: 6px 15px;
   cursor: pointer;
   white-space: nowrap;
-  text-shadow: var(--letterpress);
   transition: color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
@@ -310,11 +314,9 @@ body.scrolled .app-header {
 
 .tab.active {
   color: var(--accent);
-  background: linear-gradient(180deg, var(--surface-hi), var(--surface));
-  box-shadow:
-    inset 0 1px 0 var(--edge-hi),
-    3px 3px 7px var(--sh-dark),
-    -3px -3px 7px var(--sh-light);
+  font-weight: 600;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-sm);
 }
 
 /* ---------- layout ---------- */
@@ -335,35 +337,33 @@ body.scrolled .app-header {
   to   { opacity: 1; transform: none; }
 }
 
-/* the base raised face: same material as the page, lifted out of it */
+/* the base raised face: same material as the page, lifted out of it.
+   Cards don't react to hover — they aren't controls. */
 .card {
   position: relative;
   background:
     var(--grain) repeat,
-    linear-gradient(165deg, var(--surface-hi), var(--surface) 58%);
+    linear-gradient(170deg, var(--surface-hi), var(--surface) 62%);
   border-radius: var(--radius);
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise);
-  padding: 22px;
-  margin-bottom: 18px;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  padding: 20px;
+  margin-bottom: 16px;
 }
-
-.card:hover { box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-lift); }
 
 .card > * { position: relative; z-index: 1; }
 
 .card-title {
   margin: 0 0 3px;
-  font-size: 0.98rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-size: 0.94rem;
+  font-weight: 620;
+  letter-spacing: -0.012em;
   text-shadow: var(--letterpress);
 }
 
 .card-subtitle {
   margin: 0 0 16px;
   color: var(--text-muted);
-  font-size: 0.83rem;
+  font-size: 0.82rem;
 }
 
 .chart-host { overflow-x: auto; }
@@ -378,7 +378,7 @@ body.scrolled .app-header {
 .bento {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 18px;
+  gap: 16px;
   perspective: 1400px;
 }
 
@@ -418,8 +418,8 @@ body.scrolled .app-header {
 
 .month-label {
   margin: 0;
-  font-size: 1.16rem;
-  font-weight: 700;
+  font-size: 1.08rem;
+  font-weight: 620;
   letter-spacing: -0.02em;
   min-width: 190px;
   text-align: center;
@@ -428,8 +428,8 @@ body.scrolled .app-header {
 }
 
 .month-nav .btn-ghost {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border-radius: 50%;
 }
@@ -449,8 +449,8 @@ body.scrolled .app-header {
 
 .bento-hero::before {
   background:
-    radial-gradient(460px 300px at var(--mx, 28%) var(--my, 0%), var(--gloss), transparent 68%),
-    linear-gradient(180deg, var(--gloss), rgba(255, 255, 255, 0) 42%);
+    radial-gradient(340px 240px at var(--mx, 28%) var(--my, 0%), var(--gloss), transparent 70%),
+    linear-gradient(180deg, var(--gloss), rgba(255, 255, 255, 0) 38%);
 }
 
 .bento-head {
@@ -473,22 +473,22 @@ body.scrolled .app-header {
   padding: 10px 0 18px;
 }
 
+/* small type carries no letterpress — it only muddies it */
 .figure-label {
   color: var(--text-muted);
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  text-shadow: var(--letterpress);
+  letter-spacing: 0.1em;
 }
 
 .figure-value {
-  font-size: clamp(2rem, 4.6vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(1.85rem, 3.8vw, 2.5rem);
+  font-weight: 620;
   line-height: 1.1;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
-  margin-top: 4px;
+  margin-top: 6px;
   text-shadow: var(--letterpress);
 }
 
@@ -506,20 +506,19 @@ body.scrolled .app-header {
 }
 
 .budget-input-wrap .currency {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-shadow: var(--letterpress);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .budget-input-wrap .input {
-  width: 130px;
+  width: 128px;
   height: 30px;
   background: none;
   box-shadow: none;
   padding: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 620;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
@@ -534,41 +533,39 @@ body.scrolled .app-header {
   position: relative;
   background:
     var(--grain) repeat,
-    linear-gradient(165deg, var(--surface-hi), var(--surface) 58%);
+    linear-gradient(170deg, var(--surface-hi), var(--surface) 62%);
   border-radius: var(--radius);
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise);
   padding: 16px 17px;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
 }
 
 /* hover moves the tile toward the viewer, not just up the page */
 .stat-tile:hover {
-  transform: translateY(-2px) translateZ(16px);
+  transform: translateY(-1px) translateZ(10px);
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-lift);
 }
 
 .stat-tile > * { position: relative; z-index: 1; }
 
-/* icon token: a small pressed coin in the corner */
+/* icon token: a shallow coin stamped into the corner — engraved
+   rather than extruded, so it sits behind the number in the
+   reading order instead of competing with it */
 .stat-icon {
   position: absolute;
-  top: 13px;
-  right: 13px;
-  width: 32px;
-  height: 32px;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   line-height: 1;
-  box-shadow:
-    inset 0 1px 0 var(--edge-hi),
-    2px 2px 5px var(--sh-dark),
-    -2px -2px 5px var(--sh-light);
+  background: var(--field);
+  box-shadow: inset 1px 1px 3px var(--sh-dark), inset -1px -1px 3px var(--sh-light);
+  opacity: 0.9;
 }
-
-/* the coin is always the page material; only the engraving is tinted */
-.stat-icon { background: linear-gradient(160deg, var(--surface-hi), var(--surface)); }
 
 .tint-blue   { color: var(--cat-1); }
 .tint-green  { color: var(--cat-2); }
@@ -577,28 +574,35 @@ body.scrolled .app-header {
 
 .stat-label {
   color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 650;
+  font-size: 0.69rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  margin-bottom: 8px;
-  padding-right: 38px;
-  text-shadow: var(--letterpress);
+  letter-spacing: 0.1em;
+  margin-bottom: 9px;
+  padding-right: 36px;
 }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 1.4rem;
+  font-weight: 620;
+  letter-spacing: -0.028em;
   line-height: 1.2;
   word-break: break-word;
   font-variant-numeric: tabular-nums;
   text-shadow: var(--letterpress);
 }
 
-.stat-hint { color: var(--text-secondary); font-size: 0.79rem; margin-top: 4px; }
-.stat-hint.good { color: var(--status-good-text); font-weight: 600; }
-.stat-hint.bad  { color: var(--status-critical); font-weight: 600; }
+.stat-hint {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-hint.good { color: var(--status-good-text); font-weight: 550; }
+.stat-hint.bad  { color: var(--status-critical); font-weight: 550; }
 
 /* ---------- buttons ---------- */
 
@@ -611,16 +615,16 @@ body.scrolled .app-header {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 38px;
+  height: 36px;
   font: inherit;
-  font-size: 0.88rem;
-  font-weight: 620;
+  font-size: 0.87rem;
+  font-weight: 580;
   letter-spacing: -0.005em;
   color: var(--text-primary);
   background: linear-gradient(180deg, var(--surface-hi), var(--surface));
   border: none;
-  border-radius: 11px;
-  padding: 0 16px;
+  border-radius: 10px;
+  padding: 0 15px;
   cursor: pointer;
   text-shadow: var(--letterpress);
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-sm);
@@ -639,32 +643,30 @@ body.scrolled .app-header {
 .btn-primary {
   color: #ffffff;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 46%),
-    linear-gradient(180deg, var(--accent-hi), var(--accent) 52%, var(--accent-lo));
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, var(--accent-hi), var(--accent-lo));
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
-    4px 5px 11px var(--sh-dark),
-    -3px -3px 8px var(--sh-light);
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    3px 4px 9px var(--sh-dark),
+    -2px -2px 6px var(--sh-light);
 }
 
 .btn-primary:hover {
   color: #ffffff;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 46%),
-    linear-gradient(180deg, var(--accent-hi), var(--accent-lo) 90%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, var(--accent), var(--accent-lo));
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
-    6px 8px 16px var(--sh-dark),
-    -3px -3px 8px var(--sh-light);
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    4px 6px 13px var(--sh-dark),
+    -2px -2px 6px var(--sh-light);
 }
 
 .btn-primary:active {
   transform: translateY(1px);
   background: linear-gradient(180deg, var(--accent-lo), var(--accent-deep));
-  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.42), inset 0 -1px 0 rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.32);
 }
 
 .btn-ghost {
@@ -680,12 +682,12 @@ body.scrolled .app-header {
 /* fields are carved into the material, never raised out of it */
 .input {
   font: inherit;
-  font-size: 0.9rem;
-  height: 38px;
+  font-size: 0.89rem;
+  height: 36px;
   color: var(--text-primary);
   background: var(--field);
   border: none;
-  border-radius: 11px;
+  border-radius: 10px;
   padding: 0 13px;
   width: 100%;
   box-shadow: var(--nm-press-sm);
@@ -706,7 +708,7 @@ select.input {
   padding-right: 30px;
   background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
                     linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position: calc(100% - 16px) 17px, calc(100% - 11px) 17px;
+  background-position: calc(100% - 16px) 16px, calc(100% - 11px) 16px;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
@@ -735,51 +737,44 @@ select.input {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 11px 12px;
+  padding: 10px 12px;
   margin: 0 -12px;
   border-radius: var(--radius-sm);
   border-bottom: 1px solid var(--grid);
-  transition: box-shadow 0.16s ease, background 0.16s ease;
+  transition: background 0.16s ease;
 }
 
-/* hovering lifts the row a hair out of the card */
-.expense-row:hover {
-  border-bottom-color: transparent;
-  background: linear-gradient(180deg, var(--surface-hi), var(--surface));
-  box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-raise-sm);
-}
+/* a row is a list item, not a control: hover tints, nothing lifts */
+.expense-row:hover { background: var(--field); }
 
 .expense-row:last-child { border-bottom: none; }
 
-/* a small domed gem in the category's colour */
+/* a flat chip of the category's colour, with just enough of an
+   inner edge to belong to the same material */
 .cat-dot {
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex: none;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.65),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
-    1px 1px 3px var(--sh-dark);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 .expense-main { flex: 1; min-width: 0; }
 
 .expense-note {
-  font-weight: 600;
+  font-weight: 550;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.expense-meta { color: var(--text-muted); font-size: 0.79rem; }
+.expense-meta { color: var(--text-muted); font-size: 0.78rem; }
 
 .expense-amount {
-  font-weight: 700;
+  font-weight: 620;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   letter-spacing: -0.02em;
-  text-shadow: var(--letterpress);
 }
 
 .expense-actions { display: flex; gap: 4px; }
@@ -796,11 +791,7 @@ select.input {
   transition: box-shadow 0.14s ease, color 0.14s ease, background 0.14s ease;
 }
 
-.icon-btn:hover {
-  color: var(--accent);
-  background: linear-gradient(180deg, var(--surface-hi), var(--surface));
-  box-shadow: inset 0 1px 0 var(--edge-hi), 2px 2px 5px var(--sh-dark), -2px -2px 5px var(--sh-light);
-}
+.icon-btn:hover { color: var(--accent); background: var(--surface); }
 
 .icon-btn:active { box-shadow: var(--nm-press-sm); }
 
@@ -810,8 +801,8 @@ select.input {
 .empty-state {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.88rem;
-  padding: 30px 16px;
+  font-size: 0.85rem;
+  padding: 28px 16px;
   border-radius: var(--radius-sm);
   background: var(--field);
   box-shadow: var(--nm-press-sm);
@@ -822,59 +813,55 @@ select.input {
   display: flex;
   justify-content: center;
   margin-bottom: 9px;
-  opacity: 0.7;
+  opacity: 0.55;
 }
 
 /* ---------- meters (budget + savings) ---------- */
 
-/* a glass tube sunk into the surface, with a liquid fill that has
-   its own specular band across the top */
+/* a glass tube sunk into the surface, with a liquid fill that keeps
+   a thin specular band — enough to read as glass, not as a lamp */
 .meter {
   position: relative;
-  height: 12px;
+  height: 10px;
   background: var(--field-deep);
   border-radius: 999px;
   overflow: hidden;
   box-shadow:
-    inset 2px 2px 5px var(--sh-dark),
-    inset -1px -1px 3px var(--sh-light),
-    inset 0 0 0 1px var(--edge-lo);
+    inset 2px 2px 4px var(--sh-dark),
+    inset -1px -1px 2px var(--sh-light);
 }
 
-.meter-lg { height: 18px; }
+.meter-lg { height: 14px; }
 
 .meter-fill {
   position: relative;
   height: 100%;
   border-radius: 999px;
   min-width: 3px;
-  box-shadow:
-    inset 0 -3px 6px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    1px 0 4px rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.18);
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .meter-fill::after {
   content: "";
   position: absolute;
-  inset: 1px 1px 50% 1px;
+  inset: 1px 1px 55% 1px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.05));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
 .meter-caption {
-  font-size: 0.79rem;
-  color: var(--text-secondary);
-  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 9px;
   font-variant-numeric: tabular-nums;
 }
 
 .meter-caption svg { vertical-align: -2px; }
 
-.meter-caption .over { color: var(--status-critical); font-weight: 700; }
-.meter-caption .reached { color: var(--status-good-text); font-weight: 700; }
+.meter-caption .over { color: var(--status-critical); font-weight: 600; }
+.meter-caption .reached { color: var(--status-good-text); font-weight: 600; }
 
 /* ---------- savings goals ---------- */
 
@@ -904,7 +891,7 @@ select.input {
 }
 
 .goal-name {
-  font-weight: 700;
+  font-weight: 620;
   letter-spacing: -0.015em;
   display: flex;
   align-items: center;
@@ -917,23 +904,20 @@ select.input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: linear-gradient(160deg, var(--surface-hi), var(--surface));
+  background: var(--field);
   color: var(--accent);
   flex: none;
-  box-shadow:
-    inset 0 1px 0 var(--edge-hi),
-    2px 2px 5px var(--sh-dark),
-    -2px -2px 5px var(--sh-light);
+  box-shadow: inset 1px 1px 3px var(--sh-dark), inset -1px -1px 3px var(--sh-light);
 }
 
 .goal-icon.done { color: var(--status-good-text); }
 
 .goal-deadline {
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 550;
   letter-spacing: 0.01em;
   color: var(--text-secondary);
   background: var(--field);
@@ -962,7 +946,7 @@ select.input {
   gap: 14px;
 }
 
-.settings-row label { font-weight: 600; }
+.settings-row label { font-weight: 550; color: var(--text-secondary); }
 .settings-row .input { max-width: 230px; }
 .settings-row + .settings-row { margin-top: 14px; }
 
@@ -990,22 +974,22 @@ select.input {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: linear-gradient(180deg, var(--surface-hi), var(--surface));
+  background: var(--surface);
   border: none;
   font: inherit;
   color: inherit;
   text-align: left;
   padding: 13px 15px;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 var(--edge-hi), 0 2px 6px -2px var(--sh-dark);
-  transition: filter 0.14s ease;
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+  transition: background 0.14s ease;
 }
 
-.archive-head:hover { filter: brightness(1.03); }
+.archive-head:hover { background: var(--surface-hi); }
 
 .archive-head-text { min-width: 0; }
 
-.archive-title { font-weight: 700; letter-spacing: -0.01em; text-shadow: var(--letterpress); }
+.archive-title { font-weight: 620; letter-spacing: -0.01em; }
 
 .archive-meta {
   color: var(--text-muted);
@@ -1028,12 +1012,11 @@ select.input {
 
 .archive-section-title {
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   margin: 16px 0 7px;
-  text-shadow: var(--letterpress);
 }
 
 .archive-cats { display: grid; gap: 6px; }
@@ -1081,8 +1064,7 @@ select.input {
 .about-note {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.79rem;
-  text-shadow: var(--letterpress);
+  font-size: 0.78rem;
 }
 
 /* ---------- first-run onboarding ---------- */
@@ -1109,37 +1091,38 @@ select.input {
   background:
     var(--grain) repeat,
     linear-gradient(165deg, var(--surface-hi), var(--surface) 58%);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-float);
-  padding: 34px;
+  padding: 32px;
   width: 100%;
-  max-width: 450px;
+  max-width: 440px;
   animation: modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .onboarding-card > * { position: relative; z-index: 1; }
 
 .onboarding-card .logo-mark.lg {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   margin-bottom: 18px;
 }
 
 .onboarding-card h2 {
   margin: 0 0 8px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.3rem;
+  font-weight: 620;
+  letter-spacing: -0.025em;
   text-shadow: var(--letterpress);
 }
 
 .onboarding-card p {
   margin: 0 0 22px;
-  color: var(--text-secondary);
-  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-size: 0.87rem;
 }
 
-.btn-block { width: 100%; margin-top: 12px; height: 44px; }
+.btn-block { width: 100%; margin-top: 14px; height: 42px; }
 
 /* ---------- modal ---------- */
 
@@ -1169,9 +1152,9 @@ select.input {
   background:
     var(--grain) repeat,
     linear-gradient(165deg, var(--surface-hi), var(--surface) 58%);
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow: inset 0 1px 0 var(--edge-hi), var(--nm-float);
-  padding: 26px;
+  padding: 24px;
   width: 100%;
   max-width: 430px;
   max-height: 90vh;
@@ -1188,7 +1171,8 @@ select.input {
 
 .modal h3 {
   margin: 0 0 18px;
-  font-weight: 700;
+  font-size: 1.02rem;
+  font-weight: 620;
   letter-spacing: -0.02em;
   text-shadow: var(--letterpress);
 }
@@ -1197,10 +1181,10 @@ select.input {
 
 .form-row label {
   display: block;
-  font-weight: 600;
-  font-size: 0.83rem;
+  font-weight: 550;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
   margin-bottom: 6px;
-  text-shadow: var(--letterpress);
 }
 
 .optional { color: var(--text-muted); font-weight: 400; }
@@ -1231,23 +1215,24 @@ select.input {
 
 .chart-svg text.value-label {
   fill: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 550;
   font-variant-numeric: tabular-nums;
 }
 
-.chart-svg text.cat-label { fill: var(--text-primary); font-weight: 650; }
+.chart-svg text.cat-label { fill: var(--text-primary); font-weight: 600; }
 
 .chart-svg line.gridline { stroke: var(--grid); stroke-width: 1; }
 .chart-svg line.baseline { stroke: var(--baseline); stroke-width: 1; }
 
-/* bars read as moulded plastic: a soft cast shadow under each mark */
+/* marks sit on the surface with the faintest cast shadow — the data
+   should read before the material does */
 .chart-svg .mark {
   cursor: pointer;
-  filter: drop-shadow(1px 2px 2px var(--sh-dark));
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
   transition: opacity 0.14s ease;
 }
 
-.chart-svg .mark:hover { opacity: 0.85; }
+.chart-svg .mark:hover { opacity: 0.82; }
 
 .chart-tooltip {
   position: fixed;
@@ -1262,7 +1247,7 @@ select.input {
   max-width: 240px;
 }
 
-.chart-tooltip .tt-title { font-weight: 700; }
+.chart-tooltip .tt-title { font-weight: 600; }
 .chart-tooltip .tt-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
 /* ---------- toast ---------- */
@@ -1272,17 +1257,16 @@ select.input {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(180deg, #3b414c, #23272e);
-  color: #f4f6fa;
+  background: #2b3038;
+  color: #f2f4f8;
   border-radius: 999px;
-  padding: 11px 22px;
-  font-weight: 600;
-  font-size: 0.86rem;
+  padding: 10px 20px;
+  font-weight: 550;
+  font-size: 0.85rem;
   z-index: 70;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 10px 26px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.25);
   animation: toast-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
